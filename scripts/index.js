@@ -22,6 +22,7 @@ input.addEventListener("change", async () => {
   purchaseFile = purchaseFile.slice(7);
   // console.log(pharmFile, eshopFile, purchaseFile);
 
+  subtractStock(2,pharmFile[3])
   let fullGrossProfit = 0;
   let productsWithoutPurchases = [];
   let sellPriceWithoutPurchases = 0;
@@ -45,6 +46,14 @@ input.addEventListener("change", async () => {
         meanPurchasePrice = pricePurchased / numberPurchased;
       }
 
+      // for (i = 3; i < prodPharm.length - 1; i += 2) {
+
+      // }
+      
+
+      // console.log(prodEshop)
+      // console.log(prodPharm)
+      // console.log(prodPurchases)
 
     } else {
       let fullSellPrice = 0;
@@ -69,3 +78,33 @@ input.addEventListener("change", async () => {
   // console.log(`No purchase Sum: ${sellPriceWithoutPurchases}`);
   // console.log(productsWithoutPurchases);
 });
+
+subtractStock = (stock, productArray) => {
+  let stockToSubtract = stock
+  let purchaseSum = 0
+  const productInfo = productArray.slice(0,3)
+  const purchasesInfo = productArray.slice(3)
+
+  console.log(productInfo, purchasesInfo)
+  for (i = 0; i < purchasesInfo.length - 1; i += 2) {
+    if(stockToSubtract == 0) {
+      break
+    }
+
+    if(purchasesInfo[i] && purchasesInfo[i+1]){
+      if(stockToSubtract < purchasesInfo[i]){
+        purchasesInfo[i] -= stockToSubtract 
+        purchaseSum += stockToSubtract*purchasesInfo[i+1]
+        stockToSubtract = 0
+      } else {
+        purchaseSum += purchasesInfo[i]
+        *purchasesInfo[i+1]
+        stockToSubtract -= purchasesInfo[i]
+        purchasesInfo[i] = 0
+        purchasesInfo[i+1] = 0
+      }
+    }
+  }
+  const newPurchasesArray = productInfo.concat(purchasesInfo)
+  return {newPurchasesArray, purchaseSum}
+} 
