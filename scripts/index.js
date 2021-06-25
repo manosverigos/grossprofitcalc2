@@ -18,11 +18,12 @@ input.addEventListener("change", async () => {
   await matchFiles(input.files);
 
   pharmFile = pharmFile.slice(7);
-  eshopFile = eshopFile.slice(7, 10);
+  eshopFile = eshopFile.slice(7, 8);
   purchaseFile = purchaseFile.slice(7);
   // console.log(pharmFile, eshopFile, purchaseFile);
 
-  let fullGrossProfit = 0;
+  let fullSaleSum = 0;
+  let fullPurchaseSum = 0;
   let productsWithoutPurchases = [];
   let sellPriceWithoutPurchases = 0;
 
@@ -31,17 +32,17 @@ input.addEventListener("change", async () => {
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
     const prodPurchases = purchaseFile.filter((arr) => arr[1] == productID)[0];
 
-    const prodPurchasesWithPricePerUnit = pricePerUnit(prodPurchases)
-
-    console.log(subtractStock(3,prodPurchasesWithPricePerUnit))
+    let prodPurchasesWithPricePerUnit = pricePerUnit(prodPurchases);
 
     if (prodPurchasesWithPricePerUnit.length > 3) {
-      
       // Calculate Mean Purchase Price
       let numberPurchased = 0;
       let pricePurchased = 0;
       for (i = 3; i < prodPurchasesWithPricePerUnit.length - 1; i += 2) {
-        if (prodPurchasesWithPricePerUnit[i] && prodPurchasesWithPricePerUnit[i + 1]) {
+        if (
+          prodPurchasesWithPricePerUnit[i] &&
+          prodPurchasesWithPricePerUnit[i + 1]
+        ) {
           numberPurchased += prodPurchasesWithPricePerUnit[i];
           pricePurchased += prodPurchasesWithPricePerUnit[i + 1];
         }
@@ -51,20 +52,41 @@ input.addEventListener("change", async () => {
         meanPurchasePrice = pricePurchased / numberPurchased;
       }
 
-      for (i = 3; i < prodPharm.length - 1; i += 2) {
-        
+      // End of Mean Purchase Price Calculation
+
+      // console.log("Eshop", prodEshop);
+      // console.log("Pharm", prodPharm);
+      // console.log("Agores", prodPurchases);
+      for (let i = prodEshop.length - 2; i > 2; i -= 2) {
+        if (prodEshop[i] && prodEshop[i + 1]) {
+          fullSaleSum += prodEshop[i + 1];
+          const subtractionResult = subtractStock(
+            prodEshop[i],
+            prodPurchasesWithPricePerUnit
+          );
+          fullPurchaseSum += subtractionResult.purchaseSum;
+          prodPurchasesWithPricePerUnit = subtractionResult.newPurchasesArray;
+          // console.log("Agores", prodPurchasesWithPricePerUnit);
+        }
+        if (prodPharm) {
+          if (prodPharm[i] && prodPharm[i + 1]) {
+            prodPurchasesWithPricePerUnit = subtractStock(
+              prodPharm[i],
+              prodPurchasesWithPricePerUnit
+            ).newPurchasesArray;
+          }
+        }
       }
-      
 
-      // console.log(prodEshop)
-      // console.log(prodPharm)
-      // console.log(prodPurchases)
-
+      // console.log(fullSaleSum, fullPurchaseSum);
+      // console.log("Eshop", prodEshop);
+      // console.log("Pharm", prodPharm);
+      // console.log("Agores", prodPurchasesWithPricePerUnit);
     } else {
       let fullSellPrice = 0;
       let prodNumberWithoutPurchases = 0;
 
-      for (i = 3; i < prodEshop.length - 1; i += 2) {
+      for (let i = prodEshop.length - 2; i > 2; i -= 2) {
         if (prodEshop[i] && prodEshop[i + 1]) {
           fullSellPrice += prodEshop[i + 1];
           prodNumberWithoutPurchases += prodEshop[i];
@@ -85,42 +107,42 @@ input.addEventListener("change", async () => {
 });
 
 subtractStock = (stock, productArray) => {
-  let stockToSubtract = stock
-  let purchaseSum = 0
-  const productInfo = productArray.slice(0,3)
-  const purchasesInfo = productArray.slice(3)
+  let stockToSubtract = stock;
+  let purchaseSum = 0;
+  const productInfo = productArray.slice(0, 3);
+  const purchasesInfo = productArray.slice(3);
 
   // console.log(productInfo, purchasesInfo)
-  for (i = 0; i < purchasesInfo.length - 1; i += 2) {
-    if(stockToSubtract == 0) {
-      break
+  for (let j = purchasesInfo.length - 2; j >= 0; j -= 2) {
+    console.log(purchaseSum);
+    if (stockToSubtract == 0) {
+      break;
     }
 
-    if(purchasesInfo[i] && purchasesInfo[i+1]){
-      if(stockToSubtract < purchasesInfo[i]){
-        purchasesInfo[i] -= stockToSubtract 
-        purchaseSum += stockToSubtract*purchasesInfo[i+1]
-        stockToSubtract = 0
+    if (purchasesInfo[j] && purchasesInfo[j + 1]) {
+      if (stockToSubtract < purchasesInfo[j]) {
+        purchasesInfo[j] -= stockToSubtract;
+        purchaseSum += stockToSubtract * purchasesInfo[j + 1];
+        stockToSubtract = 0;
       } else {
-        purchaseSum += purchasesInfo[i]
-        *purchasesInfo[i+1]
-        stockToSubtract -= purchasesInfo[i]
-        purchasesInfo[i] = 0
-        purchasesInfo[i+1] = 0
+        purchaseSum += purchasesInfo[j] * purchasesInfo[j + 1];
+        stockToSubtract -= purchasesInfo[j];
+        purchasesInfo[j] = 0;
+        purchasesInfo[j + 1] = 0;
       }
     }
   }
-  const newPurchasesArray = productInfo.concat(purchasesInfo)
-  return {newPurchasesArray, purchaseSum}
-} 
+  const newPurchasesArray = productInfo.concat(purchasesInfo);
+  return { newPurchasesArray, purchaseSum };
+};
 
 pricePerUnit = (purchaseArray) => {
-  const productInfo = purchaseArray.slice(0,3)
-  const purchasesInfo = purchaseArray.slice(3)
-  for (i = 0; i < purchasesInfo.length - 1; i += 2) {
-    if(purchasesInfo[i] && purchasesInfo[i+1]){
-      purchasesInfo[i+1] /= purchasesInfo[i] 
+  const productInfo = purchaseArray.slice(0, 3);
+  const purchasesInfo = purchaseArray.slice(3);
+  for (let i = purchasesInfo.length - 2; i >= 0; i -= 2) {
+    if (purchasesInfo[i] && purchasesInfo[i + 1]) {
+      purchasesInfo[i + 1] /= purchasesInfo[i];
     }
   }
-  return productInfo.concat(purchasesInfo)
-}
+  return productInfo.concat(purchasesInfo);
+};
