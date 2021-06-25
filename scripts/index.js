@@ -134,6 +134,8 @@ subtractStock = (stock, productArray) => {
   }
   const newPurchasesArray = productInfo.concat(purchasesInfo);
   return { newPurchasesArray, purchaseSum };
+
+  // Set purchase price to mean price when no more purchases
 };
 
 pricePerUnit = (purchaseArray) => {
