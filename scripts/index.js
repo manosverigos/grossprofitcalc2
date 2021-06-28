@@ -1,7 +1,7 @@
 const input = document.getElementById("input");
 
 input.addEventListener("change", async () => {
-  let pharmFile, eshopFile, purchaseFile;
+  let pharmFile, eshopFile, purchaseFile, abroadFile;
   async function matchFiles(files) {
     for (const file of files) {
       if (file.name == "pharm.xlsx") {
@@ -13,12 +13,16 @@ input.addEventListener("change", async () => {
       if (file.name == "agores.xlsx") {
         purchaseFile = await readXlsxFile(file);
       }
+      if (file.name == "abroad.xlsx") {
+        abroadFile = await readXlsxFile(file);
+      }
     }
   }
   await matchFiles(input.files);
 
+  eshopFile = eshopFile.slice(10, 11);
+  abroadFile = abroadFile.slice(7);
   pharmFile = pharmFile.slice(7);
-  eshopFile = eshopFile.slice(7, 8);
   purchaseFile = purchaseFile.slice(7);
   // console.log(pharmFile, eshopFile, purchaseFile);
 
@@ -29,11 +33,16 @@ input.addEventListener("change", async () => {
 
   for (prodEshop of eshopFile) {
     const productID = prodEshop[1];
+    const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
     const prodPurchases = purchaseFile.filter((arr) => arr[1] == productID)[0];
+    let meanPurchasePrice = 0;
 
     let prodPurchasesWithPricePerUnit = pricePerUnit(prodPurchases);
 
+    console.log("Eshop", prodEshop);
+    console.log("Pharm", prodPharm);
+    console.log("Agores", prodPurchases);
     if (prodPurchasesWithPricePerUnit.length > 3) {
       // Calculate Mean Purchase Price
       let numberPurchased = 0;
@@ -47,7 +56,6 @@ input.addEventListener("change", async () => {
           pricePurchased += prodPurchasesWithPricePerUnit[i + 1];
         }
       }
-      let meanPurchasePrice = 0;
       if (numberPurchased != 0) {
         meanPurchasePrice = pricePurchased / numberPurchased;
       }
@@ -62,26 +70,41 @@ input.addEventListener("change", async () => {
           fullSaleSum += prodEshop[i + 1];
           const subtractionResult = subtractStock(
             prodEshop[i],
-            prodPurchasesWithPricePerUnit
+            prodPurchasesWithPricePerUnit,
+            meanPurchasePrice
           );
           fullPurchaseSum += subtractionResult.purchaseSum;
           prodPurchasesWithPricePerUnit = subtractionResult.newPurchasesArray;
           // console.log("Agores", prodPurchasesWithPricePerUnit);
         }
+        if (prodAbroad) {
+          if (prodAbroad[i] && prodAbroad[i + 1]) {
+            fullSaleSum += prodAbroad[i + 1] * 2;
+            const subtractionResult = subtractStock(
+              prodAbroad[i],
+              prodPurchasesWithPricePerUnit,
+              meanPurchasePrice
+            ).newPurchasesArray;
+            prodPurchasesWithPricePerUnit = subtractionResult.newPurchasesArray;
+            fullPurchaseSum += subtractionResult.purchaseSum;
+          }
+        }
         if (prodPharm) {
           if (prodPharm[i] && prodPharm[i + 1]) {
             prodPurchasesWithPricePerUnit = subtractStock(
               prodPharm[i],
-              prodPurchasesWithPricePerUnit
+              prodPurchasesWithPricePerUnit,
+              meanPurchasePrice
             ).newPurchasesArray;
           }
         }
       }
 
-      // console.log(fullSaleSum, fullPurchaseSum);
-      // console.log("Eshop", prodEshop);
-      // console.log("Pharm", prodPharm);
-      // console.log("Agores", prodPurchasesWithPricePerUnit);
+      console.log(fullPurchaseSum);
+      console.log("Eshop", prodEshop);
+      console.log("Abroad", prodAbroad);
+      console.log("Pharm", prodPharm);
+      console.log("Agores", prodPurchasesWithPricePerUnit);
     } else {
       let fullSellPrice = 0;
       let prodNumberWithoutPurchases = 0;
@@ -101,12 +124,13 @@ input.addEventListener("change", async () => {
       });
     }
   }
-  // console.log(`Gross Profit: ${fullGrossProfit}`)
+  const grossProfit = fullSaleSum - fullPurchaseSum;
+  console.log(grossProfit);
   // console.log(`No purchase Sum: ${sellPriceWithoutPurchases}`);
   // console.log(productsWithoutPurchases);
 });
 
-subtractStock = (stock, productArray) => {
+subtractStock = (stock, productArray, meanPurchasePrice) => {
   let stockToSubtract = stock;
   let purchaseSum = 0;
   const productInfo = productArray.slice(0, 3);
@@ -114,7 +138,6 @@ subtractStock = (stock, productArray) => {
 
   // console.log(productInfo, purchasesInfo)
   for (let j = purchasesInfo.length - 2; j >= 0; j -= 2) {
-    console.log(purchaseSum);
     if (stockToSubtract == 0) {
       break;
     }
@@ -130,12 +153,20 @@ subtractStock = (stock, productArray) => {
         purchasesInfo[j] = 0;
         purchasesInfo[j + 1] = 0;
       }
+    } else if (purchasesInfo[j]) {
+      purchasesInfo[j + 1] = 0;
+      stockToSubtract -= purchasesInfo[j];
+      purchasesInfo[j] = 0;
     }
   }
+
+  if (stockToSubtract > 0) {
+    purchaseSum += stockToSubtract * meanPurchasePrice;
+    stockToSubtract = 0;
+  }
+
   const newPurchasesArray = productInfo.concat(purchasesInfo);
   return { newPurchasesArray, purchaseSum };
-
-  // Set purchase price to mean price when no more purchases
 };
 
 pricePerUnit = (purchaseArray) => {
