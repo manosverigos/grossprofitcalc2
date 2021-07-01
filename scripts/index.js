@@ -21,11 +21,19 @@ input.addEventListener("change", async () => {
         abroadFile = await readXlsxFile(file);
         count += 1;
       }
+      if (file.name == "yeb.xlsx") {
+        yebFile = await readXlsxFile(file);
+        count += 1;
+      }
+      if (file.name == "prods.xlsx") {
+        prodsFile = await readXlsxFile(file);
+        count += 1;
+      }
     }
   }
   await matchFiles(input.files);
 
-  if (count != 4) {
+  if (count != 6) {
     // console.log("nope");
     return;
   }
@@ -34,6 +42,9 @@ input.addEventListener("change", async () => {
   abroadFile = abroadFile.slice(7);
   pharmFile = pharmFile.slice(7);
   purchaseFile = purchaseFile.slice(7);
+  prodsFile = prodsFile.slice(6);
+  yebFile = yebFile.slice(1);
+
   // console.log(pharmFile, eshopFile, purchaseFile);
 
   let fullSaleSum = 0;
@@ -43,7 +54,6 @@ input.addEventListener("change", async () => {
   let counter = 0;
   for (prodEshop of eshopFile) {
     counter++;
-    console.log(counter);
     const productID = prodEshop[1];
     const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
@@ -86,7 +96,9 @@ input.addEventListener("change", async () => {
             const subtractionResult = subtractStock(
               prodEshop[i],
               prodPurchasesWithPricePerUnit,
-              meanPurchasePrice
+              meanPurchasePrice,
+              prodsFile,
+              yebFile
             );
             fullPurchaseSum += subtractionResult.purchaseSum;
             prodPurchasesWithPricePerUnit = subtractionResult.newPurchasesArray;
@@ -98,7 +110,9 @@ input.addEventListener("change", async () => {
               const subtractionResult = subtractStock(
                 prodAbroad[i],
                 prodPurchasesWithPricePerUnit,
-                meanPurchasePrice
+                meanPurchasePrice,
+                prodsFile,
+                yebFile
               );
               prodPurchasesWithPricePerUnit =
                 subtractionResult.newPurchasesArray;
@@ -110,7 +124,9 @@ input.addEventListener("change", async () => {
               prodPurchasesWithPricePerUnit = subtractStock(
                 prodPharm[i],
                 prodPurchasesWithPricePerUnit,
-                meanPurchasePrice
+                meanPurchasePrice,
+                prodsFile,
+                yebFile
               ).newPurchasesArray;
             }
           }
@@ -146,13 +162,32 @@ input.addEventListener("change", async () => {
   // console.log(`No purchase Sum: ${sellPriceWithoutPurchases}`);
   // console.log(productsWithoutPurchases);
 });
-
-subtractStock = (stock, productArray, meanPurchasePrice) => {
+calculateYEBdiscount = (productID, prodsFile, yebFile) => {
+  let discount = 1;
+  const productInfo = prodsFile.filter((productArray) => {
+    return productArray[1] == productID;
+  });
+  const brand = productInfo[0][6];
+  const yeb = yebFile.filter((brandArray) => {
+    return brandArray[0] == brand;
+  })[0];
+  if (yeb) {
+    discount = 1 - yeb[1] / 100;
+  }
+  return discount;
+};
+subtractStock = (
+  stock,
+  productArray,
+  meanPurchasePrice,
+  prodsFile,
+  yebFile
+) => {
   let stockToSubtract = stock;
   let purchaseSum = 0;
   const productInfo = productArray.slice(0, 3);
   const purchasesInfo = productArray.slice(3);
-
+  const yebDiscount = calculateYEBdiscount(productArray[1], prodsFile, yebFile);
   // console.log(productInfo, purchasesInfo)
   for (let j = purchasesInfo.length - 4; j >= 0; j -= 2) {
     if (stockToSubtract == 0) {
@@ -161,10 +196,10 @@ subtractStock = (stock, productArray, meanPurchasePrice) => {
     if (purchasesInfo[j] && purchasesInfo[j + 1]) {
       if (stockToSubtract < purchasesInfo[j]) {
         purchasesInfo[j] -= stockToSubtract;
-        purchaseSum += stockToSubtract * purchasesInfo[j + 1];
+        purchaseSum += stockToSubtract * purchasesInfo[j + 1] * yebDiscount;
         stockToSubtract = 0;
       } else {
-        purchaseSum += purchasesInfo[j] * purchasesInfo[j + 1];
+        purchaseSum += purchasesInfo[j] * purchasesInfo[j + 1] * yebDiscount;
         stockToSubtract -= purchasesInfo[j];
         purchasesInfo[j] = 0;
         purchasesInfo[j + 1] = 0;
@@ -181,7 +216,7 @@ subtractStock = (stock, productArray, meanPurchasePrice) => {
   }
 
   if (stockToSubtract > 0) {
-    purchaseSum += stockToSubtract * meanPurchasePrice;
+    purchaseSum += stockToSubtract * meanPurchasePrice * yebDiscount;
     stockToSubtract = 0;
   }
   // console.log("purchaseSum", purchaseSum);
