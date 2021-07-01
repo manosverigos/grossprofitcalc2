@@ -50,7 +50,7 @@ input.addEventListener("change", async () => {
   yebFile = yebFile.slice(1);
 
   // console.log(pharmFile, eshopFile, purchaseFile);
-
+console.log(eshopFile)
   let fullSaleSumEshop = 0;
   let fullPurchaseSumEshop = 0;
   let productsWithoutPurchasesEshop = [];
@@ -63,6 +63,10 @@ input.addEventListener("change", async () => {
 
   for (prodEshop of eshopFile) {
     const productID = prodEshop[1];
+    if(!/\d{6}/.test(productID)){
+      continue
+    }
+
     const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
     const prodPurchases = purchaseFile.filter((arr) => arr[1] == productID)[0];
