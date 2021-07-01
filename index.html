@@ -7,7 +7,27 @@
     <script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
   </head>
   <body>
-    <input type="file" multiple id="input" />
+    <div id="excelFileDescription">
+      Τα excel πωλήσεων πρέπει να εκδοθούν με περίοδο ανάλυσης 1 ημέρα. Το excel
+      αγορών πρέπει να εκδοθεί για το μέγιστο δυνατό διάστημα και με περίοδο
+      ανάλυσης 7 ημέρες.
+      <div id="excelFileList">
+        <br>
+        <h2>Ονόματα αρχείων</h2>
+        <ul>
+          <li>Πωλήσεις Eshop: <strong>eshop.xlsx </strong>(Σειρές: )</li>
+          <li>Πωλήσεις εξωτερικού: <strong>abroad.xlsx</strong> (Σειρές: )</li>
+          <li>Πωλήσεις φαρμακείου: <strong>pharm.xlsx</strong> (Σειρές: )</li>
+          <li>Αγορές προϊόντων: <strong>agores.xlsx</strong></li>
+          <li>Προϊόντα: <strong>prods.xlsx</strong></li>
+          <li>Year End Bonus: <strong>yeb.xlsx</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div id="inputDiv">
+      Παρακαλώ ανεβάστε τα παραπάνω αρχεία για να ξεκινήσει ο υπολογισμός <br> <br>
+      <input type="file" multiple id="input" /></div>
+    <div id="results"></div>
   </body>
   <script src="./scripts/index.js"></script>
 </html>

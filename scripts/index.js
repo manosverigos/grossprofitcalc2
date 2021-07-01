@@ -1,6 +1,7 @@
 const input = document.getElementById("input");
 
 input.addEventListener("change", async () => {
+  document.getElementById('results').innerHTML = '<br>Παρακαλώ περιμένετε...'
   let pharmFile, eshopFile, purchaseFile, abroadFile;
   let count = 0;
   async function matchFiles(files) {
@@ -35,6 +36,7 @@ input.addEventListener("change", async () => {
 
   if (count != 6) {
     // console.log("nope");
+    document.getElementById('results').innerHTML = '<br>Τα αρχεία που ανεβάσατε δεν είναι σωστά'
     return;
   }
 
@@ -51,9 +53,7 @@ input.addEventListener("change", async () => {
   let fullPurchaseSum = 0;
   let productsWithoutPurchases = [];
   let sellPriceWithoutPurchases = 0;
-  let counter = 0;
   for (prodEshop of eshopFile) {
-    counter++;
     const productID = prodEshop[1];
     const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
@@ -89,6 +89,8 @@ input.addEventListener("change", async () => {
         // console.log("Abroad", prodAbroad);
         // console.log("Pharm", prodPharm);
         // console.log("Agores", prodPurchasesWithPricePerUnit);
+
+        
 
         for (let i = prodEshop.length - 4; i > 2; i -= 2) {
           if (prodEshop[i] && prodEshop[i + 1]) {
@@ -158,7 +160,10 @@ input.addEventListener("change", async () => {
     }
   }
   const grossProfit = fullSaleSum - fullPurchaseSum;
-  console.log(grossProfit);
+  document.getElementById('results').innerHTML = `<br>Μείκτο κέρδος: <strong>${grossProfit.toFixed(2)} \u20AC</strong><br>
+  Τζίρος χωρίς αντίστοιχες αγορές: <strong>${sellPriceWithoutPurchases.toFixed(2)} \u20AC</strong>`
+  return
+  // console.log(grossProfit);
   // console.log(`No purchase Sum: ${sellPriceWithoutPurchases}`);
   // console.log(productsWithoutPurchases);
 });
