@@ -60,11 +60,15 @@ input.addEventListener("change", async () => {
 
   let fullSaleSumEshop = 0;
   let fullPurchaseSumEshop = 0;
+  let fullSaleSumAbroad = 0;
+  let fullPurchaseSumAbroad = 0;
+  let fullSaleSumPharm = 0;
+  let fullPurchaseSumPharm = 0;
+
   let productsWithoutPurchases = [];
   let sellPriceWithoutPurchases = 0;
 
-  let fullSaleSumPharm = 0;
-  let fullPurchaseSumPharm = 0;
+
 
   for (product of newProdsFile) {
     const productID = product[0];
@@ -103,7 +107,7 @@ input.addEventListener("change", async () => {
           }
           if (prodAbroad) {
             if (prodAbroad[i] && prodAbroad[i + 1]) {
-              fullSaleSumEshop += prodAbroad[i + 1] * 2;
+              fullSaleSumAbroad += prodAbroad[i + 1] * 2;
               const subtractionResult = subtractStock(
                 prodAbroad[i],
                 prodPurchasesWithPricePerUnit,
@@ -113,7 +117,7 @@ input.addEventListener("change", async () => {
               );
               prodPurchasesWithPricePerUnit =
                 subtractionResult.newPurchasesArray;
-              fullPurchaseSumEshop += subtractionResult.purchaseSum;
+                fullPurchaseSumAbroad += subtractionResult.purchaseSum;
             }
           }
           if (prodPharm) {
@@ -167,11 +171,22 @@ input.addEventListener("change", async () => {
   }
 
   const grossProfitEshop = fullSaleSumEshop - fullPurchaseSumEshop;
+  const grossProfitAbroad = fullSaleSumAbroad - fullPurchaseSumAbroad;
   const grossProfitPharm = fullSaleSumPharm - fullPurchaseSumPharm;
 
   document.getElementById(
     "results-eshop"
   ).innerHTML = `<br>Μεικτό κέρδος Eshop: <strong>${grossProfitEshop.toFixed(
+    2
+  )} \u20AC</strong><br>`;
+  document.getElementById(
+    "results-abroad"
+  ).innerHTML = `<br>Μεικτό κέρδος εξωτερικού: <strong>${grossProfitAbroad.toFixed(
+    2
+  )} \u20AC</strong><br>`;
+  document.getElementById(
+    "results-eshop-complete"
+  ).innerHTML = `<br>Σύνολο μεικτού κέρδους Eshop: <strong>${(grossProfitEshop+grossProfitAbroad).toFixed(
     2
   )} \u20AC</strong><br>`;
   document.getElementById(
