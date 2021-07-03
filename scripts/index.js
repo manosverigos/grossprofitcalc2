@@ -45,6 +45,8 @@ input.addEventListener("change", async () => {
   abroadFile = abroadFile.slice(7);
   pharmFile = pharmFile.slice(7);
   purchaseFile = purchaseFile.slice(7);
+  yebFile = yebFile.slice(1);
+
   let newProdsFile = [];
   prodsFile = prodsFile.slice(6).forEach((arr) => {
     let newProdArray = [];
@@ -53,7 +55,6 @@ input.addEventListener("change", async () => {
     newProdsFile.push(newProdArray);
   });
 
-  yebFile = yebFile.slice(1);
 
   const purchaseArrayLength = eshopFile[0].length;
 
@@ -72,7 +73,6 @@ input.addEventListener("change", async () => {
     }
 
     const prodEshop = eshopFile.filter((arr) => arr[1] == productID)[0];
-
     const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
     const prodPurchases = purchaseFile.filter((arr) => arr[1] == productID)[0];
