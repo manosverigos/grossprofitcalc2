@@ -36,7 +36,6 @@ input.addEventListener("change", async () => {
   await matchFiles(input.files);
 
   if (count != 6) {
-    // console.log("nope");
     document.getElementById("results-eshop").innerHTML =
       "<br>Τα αρχεία που ανεβάσατε δεν είναι σωστά";
     return;
@@ -46,26 +45,33 @@ input.addEventListener("change", async () => {
   abroadFile = abroadFile.slice(7);
   pharmFile = pharmFile.slice(7);
   purchaseFile = purchaseFile.slice(7);
-  prodsFile = prodsFile.slice(6);
+  let newProdsFile = [];
+  prodsFile = prodsFile.slice(6).forEach((arr) => {
+    let newProdArray = [];
+    newProdArray.push(arr[1]);
+    newProdArray.push(arr[6]);
+    newProdsFile.push(newProdArray);
+  });
+
   yebFile = yebFile.slice(1);
 
-  // console.log(pharmFile, eshopFile, purchaseFile);
-console.log(eshopFile)
+  const purchaseArrayLength = eshopFile[0].length;
+
   let fullSaleSumEshop = 0;
   let fullPurchaseSumEshop = 0;
-  let productsWithoutPurchasesEshop = [];
-  let sellPriceWithoutPurchasesEshop = 0;
+  let productsWithoutPurchases = [];
+  let sellPriceWithoutPurchases = 0;
 
   let fullSaleSumPharm = 0;
   let fullPurchaseSumPharm = 0;
-  let productsWithoutPurchasesPharm = [];
-  let sellPriceWithoutPurchasesPharm = 0;
 
-  for (prodEshop of eshopFile) {
-    const productID = prodEshop[1];
-    if(!/\d{6}/.test(productID)){
-      continue
+  for (product of newProdsFile) {
+    const productID = product[0];
+    if (!/\d{6}/.test(productID)) {
+      continue;
     }
+
+    const prodEshop = eshopFile.filter((arr) => arr[1] == productID)[0];
 
     const prodAbroad = abroadFile.filter((arr) => arr[1] == productID)[0];
     const prodPharm = pharmFile.filter((arr) => arr[1] == productID)[0];
@@ -74,32 +80,26 @@ console.log(eshopFile)
     if (prodPurchases) {
       let prodPurchasesWithPricePerUnit = pricePerUnit(prodPurchases);
 
-      // console.log("Eshop", prodEshop);
-      // console.log("Pharm", prodPharm);
-      // console.log("Agores", prodPurchases);
       if (prodPurchasesWithPricePerUnit.length > 3) {
         const meanPurchasePrice = calculateMeanPurchasePrice(
           prodPurchasesWithPricePerUnit
         );
 
-        // console.log("Eshop", prodEshop);
-        // console.log("Abroad", prodAbroad);
-        // console.log("Pharm", prodPharm);
-        // console.log("Agores", prodPurchasesWithPricePerUnit);
-
-        for (let i = prodEshop.length - 4; i > 2; i -= 2) {
-          if (prodEshop[i] && prodEshop[i + 1]) {
-            fullSaleSumEshop += prodEshop[i + 1];
-            const subtractionResult = subtractStock(
-              prodEshop[i],
-              prodPurchasesWithPricePerUnit,
-              meanPurchasePrice,
-              prodsFile,
-              yebFile
-            );
-            fullPurchaseSumEshop += subtractionResult.purchaseSum;
-            prodPurchasesWithPricePerUnit = subtractionResult.newPurchasesArray;
-            // console.log("Agores", prodPurchasesWithPricePerUnit);
+        for (let i = purchaseArrayLength - 4; i > 2; i -= 2) {
+          if (prodEshop) {
+            if (prodEshop[i] && prodEshop[i + 1]) {
+              fullSaleSumEshop += prodEshop[i + 1];
+              const subtractionResult = subtractStock(
+                prodEshop[i],
+                prodPurchasesWithPricePerUnit,
+                meanPurchasePrice,
+                product,
+                yebFile
+              );
+              fullPurchaseSumEshop += subtractionResult.purchaseSum;
+              prodPurchasesWithPricePerUnit =
+                subtractionResult.newPurchasesArray;
+            }
           }
           if (prodAbroad) {
             if (prodAbroad[i] && prodAbroad[i + 1]) {
@@ -108,7 +108,7 @@ console.log(eshopFile)
                 prodAbroad[i],
                 prodPurchasesWithPricePerUnit,
                 meanPurchasePrice,
-                prodsFile,
+                product,
                 yebFile
               );
               prodPurchasesWithPricePerUnit =
@@ -123,7 +123,7 @@ console.log(eshopFile)
                 prodPharm[i],
                 prodPurchasesWithPricePerUnit,
                 meanPurchasePrice,
-                prodsFile,
+                product,
                 yebFile
               );
               prodPurchasesWithPricePerUnit =
@@ -132,21 +132,23 @@ console.log(eshopFile)
             }
           }
         }
-
-        // console.log(fullPurchaseSumEshop);
-        // console.log("Eshop", prodEshop);
-        // console.log("Abroad", prodAbroad);
-        // console.log("Pharm", prodPharm);
-        // console.log("Agores after", prodPurchasesWithPricePerUnit);
       }
     } else {
       let fullSellPrice = 0;
       let prodNumberWithoutPurchases = 0;
 
-      for (let i = prodEshop.length - 2; i > 2; i -= 2) {
-        if (prodEshop[i] && prodEshop[i + 1]) {
-          fullSellPrice += prodEshop[i + 1];
-          prodNumberWithoutPurchases += prodEshop[i];
+      for (let i = purchaseArrayLength - 4; i > 2; i -= 2) {
+        if (prodEshop) {
+          if (prodEshop[i] && prodEshop[i + 1]) {
+            fullSellPrice += prodEshop[i + 1];
+            prodNumberWithoutPurchases += prodEshop[i];
+          }
+        }
+        if (prodAbroad) {
+          if (prodAbroad[i] && prodAbroad[i + 1]) {
+            fullSellPrice += prodAbroad[i + 1];
+            prodNumberWithoutPurchases += prodAbroad[i];
+          }
         }
         if (prodPharm) {
           if (prodPharm[i] && prodPharm[i + 1]) {
@@ -155,15 +157,15 @@ console.log(eshopFile)
           }
         }
       }
-
-      sellPriceWithoutPurchasesEshop += fullSellPrice;
-      productsWithoutPurchasesEshop.push({
+      sellPriceWithoutPurchases += fullSellPrice;
+      productsWithoutPurchases.push({
         ID: productID,
         Number: prodNumberWithoutPurchases,
         Sum: fullSellPrice,
       });
     }
   }
+
   const grossProfitEshop = fullSaleSumEshop - fullPurchaseSumEshop;
   const grossProfitPharm = fullSaleSumPharm - fullPurchaseSumPharm;
 
@@ -179,13 +181,10 @@ console.log(eshopFile)
   )} \u20AC</strong><br>`;
   document.getElementById(
     "results-noPurchase"
-  ).innerHTML = `<br>Τζίρος χωρίς αντίστοιχες αγορές: <strong>${sellPriceWithoutPurchasesEshop.toFixed(
+  ).innerHTML = `<br>Τζίρος χωρίς αντίστοιχες αγορές: <strong>${sellPriceWithoutPurchases.toFixed(
     2
   )} \u20AC</strong>`;
   return;
-  // console.log(grossProfit);
-  // console.log(`No purchase Sum: ${sellPriceWithoutPurchasesEshop}`);
-  // console.log(productsWithoutPurchasesEshop);
 });
 
 calculateMeanPurchasePrice = (prodPurchasesWithPricePerUnit) => {
@@ -207,12 +206,9 @@ calculateMeanPurchasePrice = (prodPurchasesWithPricePerUnit) => {
   return meanPurchasePrice;
 };
 
-calculateYEBdiscount = (productID, prodsFile, yebFile) => {
+calculateYEBdiscount = (product, yebFile) => {
   let discount = 1;
-  const productInfo = prodsFile.filter((productArray) => {
-    return productArray[1] == productID;
-  });
-  const brand = productInfo[0][6];
+  const brand = product[1];
   const yeb = yebFile.filter((brandArray) => {
     return brandArray[0] == brand;
   })[0];
@@ -221,19 +217,13 @@ calculateYEBdiscount = (productID, prodsFile, yebFile) => {
   }
   return discount;
 };
-subtractStock = (
-  stock,
-  productArray,
-  meanPurchasePrice,
-  prodsFile,
-  yebFile
-) => {
+subtractStock = (stock, productArray, meanPurchasePrice, product, yebFile) => {
   let stockToSubtract = stock;
   let purchaseSum = 0;
   const productInfo = productArray.slice(0, 3);
   const purchasesInfo = productArray.slice(3);
-  const yebDiscount = calculateYEBdiscount(productArray[1], prodsFile, yebFile);
-  // console.log(productInfo, purchasesInfo)
+  const yebDiscount = calculateYEBdiscount(product, yebFile);
+
   for (let j = purchasesInfo.length - 4; j >= 0; j -= 2) {
     if (stockToSubtract == 0) {
       break;
@@ -264,7 +254,7 @@ subtractStock = (
     purchaseSum += stockToSubtract * meanPurchasePrice * yebDiscount;
     stockToSubtract = 0;
   }
-  // console.log("purchaseSum", purchaseSum);
+
   const newPurchasesArray = productInfo.concat(purchasesInfo);
   return { newPurchasesArray, purchaseSum };
 };
